@@ -20,6 +20,7 @@ public:
     Array_Iterator<T> begin() { return Array_Iterator<T>(this, m_array, 0); }
     Array_Iterator<T> end() { return Array_Iterator<T>(this, m_array + this->size(), this->size()); }
     Array_Iterator<T> last() { return Array_Iterator<T>(this, m_array + (this->size() - 1), this->size() - 1); }
+    Array_Iterator<T> make_iterator(unsigned int i) { return Array_Iterator<T>(this, m_array + i, i); }
 
     Vector() : m_size(0), m_cap(0) { m_array = nullptr; } //создание вектора по умолчанию
 

@@ -23,12 +23,12 @@ public:
                                             q_factor(5), hash_const(0.5 * (sqrt(5) - 1)), load_factor(0), rehash_factor(0.75) {}
     ~HashTable();
 
-    bool insert(Pair<unsigned int, T>); //вставка нового ключа. если он уже есть - значение изменяется
+    bool insert(unsigned int key, const T& value); //вставка нового ключа. если он уже есть - значение изменяется
     bool remove(unsigned int key); //удаление ключа. если его нет, возвращается false
     bool contain(unsigned int key); //возвращает true если ключ есть, false - если ключа нет
     bool get(unsigned int key, T& value); //в value будет записано значение, найденное по ключу (если ключ есть, иначе возвращается false)
 
-    List_Iterator<Pair<unsigned int, T>> get_(unsigned int key); //тоже get, но вовзращает итератор. если ключ не найден, вернется past-the-end итератор
+    Hash_Iterator<T> get_(unsigned int key); //тоже get, но вовзращает итератор. если ключ не найден, вернется past-the-end итератор
 
     void rehash_table(); //увеличение размера хеш-таблицы в q_factor раз при достижении load_factor значения rehash_factor.
 
@@ -103,13 +103,14 @@ Hash_Iterator<T> HashTable<T>::begin() {
             return Hash_Iterator<T>(this, a.begin(), array_it);
         ++array_it;
     }
-    throw std::runtime_error("\n[Hash_Table] begin(): hash_table is empty\n");
+    //throw std::runtime_error("\n[Hash_Table] begin(): hash_table is empty\n");
+    return Hash_Iterator<T>(this, (*(this->table.last())).end(), this->table.last());
 }
 
 template<typename T>
 Hash_Iterator<T> HashTable<T>::end() {
-    if (elem_number == 0)
-        throw std::runtime_error("\n[Hash_Table] end(): hash_table is empty\n");
+//    if (elem_number == 0)
+//        throw std::runtime_error("\n[Hash_Table] end(): hash_table is empty\n");
     return Hash_Iterator<T>(this, (*(this->table.last())).end(), this->table.last());
 }
 
@@ -120,18 +121,18 @@ unsigned int HashTable<T>::hash_func(unsigned int key) {
 }
 
 template<typename T>
-bool HashTable<T>::insert(Pair<unsigned int, T> p) {
+bool HashTable<T>::insert(unsigned int key, const T& value) {
     bool found(false);
-    auto i = hash_func(p.get_first());
+    auto i = hash_func(key);
     for (auto &a: table[i]) {
-        if (a.get_first() == p.get_first()) {
-            a.get_second() = p.get_second();
+        if (a.get_first() == key) {
+            a.get_second() = value;
             found = true;
             break;
         }
     }
     if (!found) {
-        table[i].push_back(p);
+        table[i].push_back(std::move(Pair<unsigned int, T>(key, value)));
         ++elem_number;
         load_factor = (double) elem_number / table.size();
     }
@@ -186,14 +187,14 @@ bool HashTable<T>::get(unsigned int key, T& value) {
 }
 
 template<typename T>
-List_Iterator<Pair<unsigned int, T>> HashTable<T>::get_(unsigned int key) {
+Hash_Iterator<T> HashTable<T>::get_(unsigned int key) {
     auto i = hash_func(key);
     for (auto a = table[i].begin(); a != table[i].end(); ++a) {
         if ((*a).get_first() == key) {
-            return a;
+            return Hash_Iterator<T>(this, a, table.make_iterator(i));
         }
     }
-    return table[table_size - 1].end();
+    return this->end();
 }
 
 template<typename T>

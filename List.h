@@ -65,6 +65,8 @@ public:
 
     void push_front(const T &new_value); //добавление элемента в начало
 
+    void pop_back(); //удаление последнего элемента
+
     void insert_at(int index, const T &value);
 
     void concat(List<T> &other_list);
@@ -358,12 +360,12 @@ void List<T>::clear() {
 
 template<typename T>
 void List<T>::print() {
-    Node *ptr = m_head;
-    for (size_t i = 0; i < m_size; ++i) {
-        std::cout << ptr->value << " ";
-        ptr = ptr->next;
-    }
-    std::cout << std::endl;
+//    Node *ptr = m_head;
+//    for (size_t i = 0; i < m_size; ++i) {
+//        std::cout << ptr->value << " ";
+//        ptr = ptr->next;
+//    }
+//    std::cout << std::endl;
 }
 
 template<typename T>
@@ -400,5 +402,20 @@ void List<T>::erase(List_Iterator<T> it) {
     }
     it.m_node->value.~T();
     delete it.m_node;
+    --m_size;
+}
+
+template<typename T>
+void List<T>::pop_back() {
+    Node* tmp = m_tail;
+    if (m_head == m_tail) {
+        m_tail = nullptr;
+        m_head = nullptr;
+    } else {
+        m_tail = tmp->prev;
+        m_tail->next = nullptr;
+    }
+    tmp->value.~T();
+    delete tmp;
     --m_size;
 }

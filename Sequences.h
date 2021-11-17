@@ -36,6 +36,7 @@ public:
     Array_Iterator<T> begin() { return array_data.begin(); }
     Array_Iterator<T> end() { return array_data.end(); }
     Array_Iterator<T> last() { return array_data.last(); }
+    Array_Iterator<T> make_iterator(unsigned int i) { return array_data.make_iterator(i); }
 
     ArraySequence() : array_data() {} //конструктор по умолчанию
 
@@ -170,6 +171,8 @@ public:
     void push_front(const T &value){ list_data.push_front(value); }
 
     void push_back(const T &value){ list_data.push_back(value); }
+
+    void pop_back() { list_data.pop_back(); }
 
     void print() { list_data.print(); }
 
