@@ -11,16 +11,18 @@ protected:
     ArraySequence<ListSequence<Pair<unsigned int, T>>> table; //хеш-таблица
     unsigned int table_size; //размер таблицы
     unsigned int elem_number; //число элементов в таблице
-    const unsigned int q_factor; //по умолчанию 5
-    const double hash_const; //0.5 * (sqrt(5) - 1)
     double load_factor; //отношение elem_number к table_size
-    const double rehash_factor; //0.75
+    static constexpr unsigned int q_factor = 5;
+    static constexpr double hash_const = 0.61803;
+    static constexpr double rehash_factor_1 = 0.75;
+    static constexpr double rehash_factor_2 = 0.1;
+
     unsigned int hash_func(unsigned int key); //хеш-функция
+    void rehash_table(double k); //увеличение(уменьшение) размера хеш-таблицы в q_factor раз при достижении load_factor значений rehash_factor.
 
 public:
-    HashTable() : table(), table_size(0), elem_number(0), q_factor(5), hash_const(0.5 * (sqrt(5) - 1)), load_factor(0), rehash_factor(0.75) {}
-    explicit HashTable(unsigned int n) : table(n, ListSequence<Pair<unsigned int, T>>()), table_size(n), elem_number(0),
-                                            q_factor(5), hash_const(0.5 * (sqrt(5) - 1)), load_factor(0), rehash_factor(0.75) {}
+    HashTable() : table(), table_size(0), elem_number(0), load_factor(0) {}
+    explicit HashTable(unsigned int n) : table(n, ListSequence<Pair<unsigned int, T>>()), table_size(n), elem_number(0), load_factor(0) {}
     ~HashTable();
 
     bool insert(unsigned int key, const T& value); //вставка нового ключа. если он уже есть - значение изменяется
@@ -30,10 +32,11 @@ public:
 
     Hash_Iterator<T> get_(unsigned int key); //тоже get, но вовзращает итератор. если ключ не найден, вернется past-the-end итератор
 
-    void rehash_table(); //увеличение размера хеш-таблицы в q_factor раз при достижении load_factor значения rehash_factor.
+    unsigned int get_size() { return table_size; }
+    unsigned int get_elem_number() { return elem_number; }
+    unsigned int get_max_bucket_height();
 
     void print();
-    void get_size();
 
     ArraySequence<ListSequence<Pair<unsigned int, T>>>* get_array() { return &table; }
 
@@ -82,13 +85,13 @@ public:
         return *this;
     }
 
-    friend bool operator!= (Hash_Iterator &it1, Hash_Iterator &it2) {
+    friend bool operator!= (const Hash_Iterator &it1, const Hash_Iterator &it2) {
         bool a(it1.array_it == it2.array_it);
         bool b(it1.list_it == it2.list_it);
         return !(a & b);
     }
 
-    friend bool operator== (Hash_Iterator &it1, Hash_Iterator &it2) {
+    friend bool operator== (const Hash_Iterator &it1, const Hash_Iterator &it2) {
         bool a(it1.array_it == it2.array_it);
         bool b(it1.list_it == it2.list_it);
         return (a & b);
@@ -136,7 +139,7 @@ bool HashTable<T>::insert(unsigned int key, const T& value) {
         ++elem_number;
         load_factor = (double) elem_number / table.size();
     }
-    if (load_factor > rehash_factor) rehash_table();
+    if (load_factor > rehash_factor_1) rehash_table(q_factor);
     return found;
 }
 
@@ -157,6 +160,7 @@ bool HashTable<T>::remove(unsigned int key) {
         --elem_number;
         load_factor = (double) elem_number / table.size();
     }
+    if (load_factor < rehash_factor_2) rehash_table(1.0 / q_factor);
     return found;
 }
 
@@ -198,8 +202,8 @@ Hash_Iterator<T> HashTable<T>::get_(unsigned int key) {
 }
 
 template<typename T>
-void HashTable<T>::rehash_table() {
-    table_size *= q_factor;
+void HashTable<T>::rehash_table(double k) {
+    table_size *= k;
     ArraySequence<ListSequence<Pair<unsigned int, T>>> new_table(table_size, ListSequence<Pair<unsigned int, T>>());
     for (auto &l: table) {
         for (auto &a: l) {
@@ -211,22 +215,25 @@ void HashTable<T>::rehash_table() {
     new_table.clear();
 }
 
-template<typename T>
-void HashTable<T>::print() {
-    for (auto &a: table) {
-        if (!a.empty()) a.print();
-        //
-        else std::cout << "xxx\n";
-        //
-    }
-}
-
 template <typename T>
 HashTable<T>::~HashTable<T>() {
     table.clear();
 }
 
 template<typename T>
-void HashTable<T>::get_size() {
-    std::cout << "size: " << table_size << " " << table.size() << "\n";
+unsigned int HashTable<T>::get_max_bucket_height() {
+    unsigned int res(0);
+    for (auto &l:table) {
+        if (l.size() > res)
+            res = l.size();
+    }
+    return res;
+}
+
+template<typename T>
+void HashTable<T>::print() {
+    for (auto &l: table) {
+        if (!l.empty()) l.print();
+        else std::cout <<"xxx\n";
+    }
 }

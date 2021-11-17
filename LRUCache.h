@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Sequences.h"
 #include "HashTable.h"
 
 template <typename T>
@@ -11,12 +12,14 @@ private:
     unsigned int size;
 
 public:
-    explicit LRUCache(unsigned int _size) : cache(_size), key_to_list(_size), lru_queue(), size(_size) {}
+    explicit LRUCache(unsigned int _size) : cache(2 * _size), key_to_list(2 * _size), lru_queue(), size(_size) {}
 
     Hash_Iterator<T> get(unsigned int key); // вовзращает итератор. если ключ не найден, вернется past-the-end итератор
     void push(unsigned int key, const T& value); // кладет значение в кэш
 
     Hash_Iterator<T> end() { return cache.end(); }
+
+    void print() { std::cout << "Cache:\n"; cache.print(); std::cout << "LRU_queue:\n"; lru_queue.print(); }
 };
 
 template<typename T>

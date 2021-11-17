@@ -83,6 +83,8 @@ public:
 };
 
 
+template<typename T>
+std::ostream &operator<< (std::ostream &, const List_Iterator<T> &);
 
 template<typename T>
 class List_Iterator : public Iterator<T> {
@@ -169,8 +171,15 @@ public:
     friend bool operator>= (const List_Iterator &it1, const List_Iterator &it2) { return it1.m_index >= it2.m_index; }
 
     friend int operator- (const List_Iterator &it1, const List_Iterator &it2) { return it1.m_index - it2.m_index; }
+
+    friend std::ostream &operator<< <T>(std::ostream &out, const List_Iterator<T> &l);
 };
 
+template<typename T>
+std::ostream &operator<<(std::ostream &out, const List_Iterator<T> &l) {
+    out << " ";
+    return out;
+}
 
 
 template<typename T>
@@ -360,12 +369,12 @@ void List<T>::clear() {
 
 template<typename T>
 void List<T>::print() {
-//    Node *ptr = m_head;
-//    for (size_t i = 0; i < m_size; ++i) {
-//        std::cout << ptr->value << " ";
-//        ptr = ptr->next;
-//    }
-//    std::cout << std::endl;
+    Node *ptr = m_head;
+    for (size_t i = 0; i < m_size; ++i) {
+        std::cout << ptr->value << " ";
+        ptr = ptr->next;
+    }
+    std::cout << std::endl;
 }
 
 template<typename T>
