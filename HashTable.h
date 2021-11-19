@@ -1,36 +1,52 @@
 #pragma once
+#include <functional>
+
 #include "Sequences.h"
 #include "Pair.h"
 
-template <typename T>
+//K - key, V - value, F - hash_function
+template <typename K, typename V, typename F>
 class Hash_Iterator;
 
-template <typename T>
+template <typename K>
+class HashFunctions {
+public:
+    unsigned int operator()(const unsigned int x) const {
+        return x;
+    }
+
+    unsigned int operator()(const double x) const {
+        return (unsigned int) x;
+    }
+};
+
+template <typename K, typename V, typename F = HashFunctions<K>>
 class HashTable {
 protected:
-    ArraySequence<ListSequence<Pair<unsigned int, T>>> table; //хеш-таблица
+    ArraySequence<ListSequence<Pair<K, V>>> table;
     unsigned int table_size; //размер таблицы
     unsigned int elem_number; //число элементов в таблице
     double load_factor; //отношение elem_number к table_size
     static constexpr unsigned int q_factor = 5;
-    static constexpr double hash_const = 0.61803;
     static constexpr double rehash_factor_1 = 0.75;
     static constexpr double rehash_factor_2 = 0.1;
 
-    unsigned int hash_func(unsigned int key); //хеш-функция
+    F hash_function;
+    unsigned int hash_func(unsigned int key) { unsigned int res = hash_function(key) * table_size * 1.618; return res % table_size; }
+
     void rehash_table(double k); //увеличение(уменьшение) размера хеш-таблицы в q_factor раз при достижении load_factor значений rehash_factor.
 
 public:
     HashTable() : table(), table_size(0), elem_number(0), load_factor(0) {}
-    explicit HashTable(unsigned int n) : table(n, ListSequence<Pair<unsigned int, T>>()), table_size(n), elem_number(0), load_factor(0) {}
+    explicit HashTable(unsigned int n) : table(n, ListSequence<Pair<K, V>>()), table_size(n), elem_number(0), load_factor(0) {}
     ~HashTable();
 
-    bool insert(unsigned int key, const T& value); //вставка нового ключа. если он уже есть - значение изменяется
-    bool remove(unsigned int key); //удаление ключа. если его нет, возвращается false
-    bool contain(unsigned int key); //возвращает true если ключ есть, false - если ключа нет
-    bool get(unsigned int key, T& value); //в value будет записано значение, найденное по ключу (если ключ есть, иначе возвращается false)
+    bool insert(const K& key, const V& value); //вставка нового ключа. если он уже есть - значение изменяется
+    bool remove(const K& key); //удаление ключа. если его нет, возвращается false
+    bool contain(const K& key); //возвращает true если ключ есть, false - если ключа нет
+    bool get(const K& key, V& value); //в value будет записано значение, найденное по ключу (если ключ есть, иначе возвращается false)
 
-    Hash_Iterator<T> get_(unsigned int key); //тоже get, но вовзращает итератор. если ключ не найден, вернется past-the-end итератор
+    Hash_Iterator<K, V, F> get_(const K& key); //тоже get, но вовзращает итератор. если ключ не найден, вернется past-the-end итератор
 
     unsigned int get_size() { return table_size; }
     unsigned int get_elem_number() { return elem_number; }
@@ -38,24 +54,24 @@ public:
 
     void print();
 
-    ArraySequence<ListSequence<Pair<unsigned int, T>>>* get_array() { return &table; }
+    ArraySequence<ListSequence<Pair<K, V>>>* get_array() { return &table; }
 
-    Hash_Iterator<T> begin();
-    Hash_Iterator<T> end();
+    Hash_Iterator<K, V, F> begin();
+    Hash_Iterator<K, V, F> end();
 };
 
-template <typename T>
-class Hash_Iterator : public HashTable<T> {
+template <typename K, typename V, typename F>
+class Hash_Iterator : public HashTable<K, V, F> {
 protected:
-    HashTable<T>* m_table;
-    List_Iterator<Pair<unsigned int, T>> list_it;
-    Array_Iterator<ListSequence<Pair<unsigned int, T>>> array_it;
+    HashTable<K, V, F>* m_table;
+    List_Iterator<Pair<K, V>> list_it;
+    Array_Iterator<ListSequence<Pair<K, V>>> array_it;
 
 public:
-    Hash_Iterator(HashTable<T>* table, List_Iterator<Pair<unsigned int, T>> list_it_,
-                        Array_Iterator<ListSequence<Pair<unsigned int, T>>> array_it_) : m_table(table), list_it(list_it_), array_it(array_it_) {};
+    Hash_Iterator(HashTable<K, V, F>* table, List_Iterator<Pair<K, V>> list_it_,
+                        Array_Iterator<ListSequence<Pair<K, V>>> array_it_) : m_table(table), list_it(list_it_), array_it(array_it_) {};
 
-    Pair<unsigned int, T>& operator*() {
+    Pair<K, V>& operator*() {
         if (list_it == (*array_it).end()) {
             throw std::runtime_error("\n[Hash_Iterator] operator *: index out of range\n");
         }
@@ -98,44 +114,38 @@ public:
     }
 };
 
-template<typename T>
-Hash_Iterator<T> HashTable<T>::begin() {
+template <typename K, typename V, typename F>
+Hash_Iterator<K, V, F> HashTable<K, V, F>::begin() {
     auto array_it = table.begin();
     for (auto &a: table) {
         if (!a.empty())
-            return Hash_Iterator<T>(this, a.begin(), array_it);
+            return Hash_Iterator<K, V, F>(this, a.begin(), array_it);
         ++array_it;
     }
     //throw std::runtime_error("\n[Hash_Table] begin(): hash_table is empty\n");
-    return Hash_Iterator<T>(this, (*(this->table.last())).end(), this->table.last());
+    return Hash_Iterator<K, V, F>(this, (*(this->table.last())).end(), this->table.last());
 }
 
-template<typename T>
-Hash_Iterator<T> HashTable<T>::end() {
+template <typename K, typename V, typename F>
+Hash_Iterator<K, V, F> HashTable<K, V, F>::end() {
 //    if (elem_number == 0)
 //        throw std::runtime_error("\n[Hash_Table] end(): hash_table is empty\n");
-    return Hash_Iterator<T>(this, (*(this->table.last())).end(), this->table.last());
+    return Hash_Iterator<K, V, F>(this, (*(this->table.last())).end(), this->table.last());
 }
 
-template<typename T>
-unsigned int HashTable<T>::hash_func(unsigned int key) {
-    unsigned int res = table_size * key * hash_const;
-    return res % table_size;
-}
-
-template<typename T>
-bool HashTable<T>::insert(unsigned int key, const T& value) {
+template <typename K, typename V, typename F>
+bool HashTable<K, V, F>::insert(const K& key, const V& value) {
     bool found(false);
     auto i = hash_func(key);
     for (auto &a: table[i]) {
         if (a.get_first() == key) {
-            a.get_second() = value;
+            a.set_second(value);
             found = true;
             break;
         }
     }
     if (!found) {
-        table[i].push_back(std::move(Pair<unsigned int, T>(key, value)));
+        table[i].push_back(std::move(Pair<K, V>(key, value)));
         ++elem_number;
         load_factor = (double) elem_number / table.size();
     }
@@ -143,8 +153,8 @@ bool HashTable<T>::insert(unsigned int key, const T& value) {
     return found;
 }
 
-template<typename T>
-bool HashTable<T>::remove(unsigned int key) {
+template <typename K, typename V, typename F>
+bool HashTable<K, V, F>::remove(const K& key) {
     bool found(false);
     auto i = hash_func(key);
     auto it = table[i].begin();
@@ -164,8 +174,8 @@ bool HashTable<T>::remove(unsigned int key) {
     return found;
 }
 
-template<typename T>
-bool HashTable<T>::contain(unsigned int key) {
+template <typename K, typename V, typename F>
+bool HashTable<K, V, F>::contain(const K& key) {
     bool found(false);
     auto i = hash_func(key);
     for (auto &a: table[i]) {
@@ -177,8 +187,8 @@ bool HashTable<T>::contain(unsigned int key) {
     return found;
 }
 
-template<typename T>
-bool HashTable<T>::get(unsigned int key, T& value) {
+template <typename K, typename V, typename F>
+bool HashTable<K, V, F>::get(const K& key, V& value) {
     bool found(false);
     auto i = hash_func(key);
     for (auto &a: table[i]) {
@@ -190,21 +200,21 @@ bool HashTable<T>::get(unsigned int key, T& value) {
     return found;
 }
 
-template<typename T>
-Hash_Iterator<T> HashTable<T>::get_(unsigned int key) {
+template <typename K, typename V, typename F>
+Hash_Iterator<K, V, F> HashTable<K, V, F>::get_(const K& key) {
     auto i = hash_func(key);
     for (auto a = table[i].begin(); a != table[i].end(); ++a) {
         if ((*a).get_first() == key) {
-            return Hash_Iterator<T>(this, a, table.make_iterator(i));
+            return Hash_Iterator<K, V, F>(this, a, table.make_iterator(i));
         }
     }
     return this->end();
 }
 
-template<typename T>
-void HashTable<T>::rehash_table(double k) {
+template <typename K, typename V, typename F>
+void HashTable<K, V, F>::rehash_table(double k) {
     table_size *= k;
-    ArraySequence<ListSequence<Pair<unsigned int, T>>> new_table(table_size, ListSequence<Pair<unsigned int, T>>());
+    ArraySequence<ListSequence<Pair<K, V>>> new_table(table_size, ListSequence<Pair<K, V>>());
     for (auto &l: table) {
         for (auto &a: l) {
             auto i = hash_func(a.get_first());
@@ -215,13 +225,13 @@ void HashTable<T>::rehash_table(double k) {
     new_table.clear();
 }
 
-template <typename T>
-HashTable<T>::~HashTable<T>() {
+template <typename K, typename V, typename F>
+HashTable<K, V, F>::~HashTable<K, V, F>() {
     table.clear();
 }
 
-template<typename T>
-unsigned int HashTable<T>::get_max_bucket_height() {
+template <typename K, typename V, typename F>
+unsigned int HashTable<K, V, F>::get_max_bucket_height() {
     unsigned int res(0);
     for (auto &l:table) {
         if (l.size() > res)
@@ -230,8 +240,8 @@ unsigned int HashTable<T>::get_max_bucket_height() {
     return res;
 }
 
-template<typename T>
-void HashTable<T>::print() {
+template <typename K, typename V, typename F>
+void HashTable<K, V, F>::print() {
     for (auto &l: table) {
         if (!l.empty()) l.print();
         else std::cout <<"xxx\n";

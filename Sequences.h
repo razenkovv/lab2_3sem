@@ -129,6 +129,13 @@ void ArraySequence<T>::insert_at(int index, const T &value) {
     array_data.set(index, value);
 }
 
+
+template <typename T>
+class ListSequence;
+
+template<typename T>
+std::ostream &operator<< (std::ostream &, const ListSequence<T> &);
+
 template<typename T>
 class ListSequence : public Sequence<T> {
 private:
@@ -179,6 +186,8 @@ public:
     void clear() { list_data.clear(); }
 
     bool empty() { return list_data.empty(); }
+
+    friend std::ostream &operator<< <T>(std::ostream &out, const ListSequence<T> &l);
 };
 
 template<typename T>
@@ -194,4 +203,10 @@ void ListSequence<T>::concat(Sequence<T> &other_seq) {
     for (int i = 0; i < other_seq.size(); ++i) {
         list_data.push_back(other_seq.get(i));
     }
+}
+
+template<typename T>
+std::ostream &operator<<(std::ostream &out, const ListSequence<T> &l) {
+    out << " ";
+    return out;
 }

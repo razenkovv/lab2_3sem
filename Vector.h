@@ -330,10 +330,10 @@ T& Vector<T>::operator[] (int i) {
 
 template<typename T>
 void Vector<T>::print() {
-//    for (int i = 0; i < m_size; ++i) {
-//        std::cout << get(i) << " ";
-//    }
-//    std::cout << std::endl;
+    for (int i = 0; i < m_size; ++i) {
+        std::cout << get(i) << " ";
+    }
+    std::cout << std::endl;
 }
 
 template<typename T>

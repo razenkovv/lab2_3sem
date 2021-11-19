@@ -20,7 +20,7 @@ public:
 };
 
 bool LRUCache_testing(unsigned int size) {
-    LRUCache<int> a{size};
+    LRUCache<unsigned int, int> a{size};
     bool check(true);
     std::ifstream fin;
     std::string Path1 = R"(C:\Users\Ivan\programming\labs_3sem\lab2_3sem\LRUCache_test.txt)";
@@ -65,10 +65,10 @@ bool LRUCache_testing(unsigned int size) {
 }
 
 template <typename T>
-void shuffle(ArraySequence<T> &v, int rnd) {
+void shuffle(ArraySequence<T> &v, int rnd=1) {
+    std::default_random_engine gen(rnd);
     for (int i = v.size() - 1; i > 0; --i) {
-        std::default_random_engine gen(rnd);
-        std::uniform_int_distribution<int> distr(0, i+1);
+        std::uniform_int_distribution<int> distr(0, i);
         std::swap(v[i], v[distr(gen)]);
     }
 }
@@ -108,7 +108,7 @@ double find_in_file(int key, const std::string& filename) {
     throw std::runtime_error("\nfind_in_file: key wasn't found\n");
 }
 
-Pair<int, int>* generate_random_calls_with_cache(LRUCache<double>& cache, int n, int size, const std::string& filename, int percentage=10, int frequency=10, int rnd=1) {
+Pair<int, int>* generate_random_calls_with_cache(LRUCache<unsigned int, double>& cache, int n, int size, const std::string& filename, int percentage=10, int frequency=10, int rnd=1) {
     int found(0), not_found(0);
     double _size = size * percentage; _size /= 100;
     std::default_random_engine gen(rnd);
@@ -170,7 +170,7 @@ void generate_random_calls_without_cache(int n, int size, const std::string& fil
 void time_test(int a, int b, int x) {
     std::string path = R"(C:\Users\Ivan\programming\labs_3sem\lab2_3sem\RandomData.csv)";
     generate_random_data(a);
-    LRUCache<double> cache(a / x);
+    LRUCache<unsigned int, double> cache(a / x);
     Timer t1;
     auto p = generate_random_calls_with_cache(cache, b, a, path);
     auto T1 = t1.elapsed();
@@ -180,11 +180,14 @@ void time_test(int a, int b, int x) {
 
     std::string path2 = R"(C:\Users\Ivan\programming\labs_3sem\lab2_3sem\TimeTestResult)";
     std::ofstream fout(path2);
+    fout << "Size of the storage(csv file): " << a << "; Number of calls that was made: " << b << "\n";
+    fout << "Cache is " << x << " times smaller than the storage\n";
+    fout << "9 out of 10 calls were made to the 10 percent of the storage\n";
     fout << "\nWith LRUCache: " << T1 << " sec\n";
-    fout << "\nNumber of calls that were found in the cache: " << (*p).get_first() << "; not found: " << (*p).get_second() << "\n";
+    fout << "Number of calls that was found in the cache: " << (*p).get_first() << "; not found: " << (*p).get_second() << "\n";
     fout << "Number of elements in cache: " << cache.get_elem_number() << "\n";
     fout << "Max bucket height in the end: " << cache.get_max_bucket_height() << "\n";
-    fout << "\n\nWithout LRUCache: " << T2 << " sec\n";
+    fout << "\nWithout LRUCache: " << T2 << " sec\n";
 }
 
 void test(int _size) {
@@ -192,6 +195,13 @@ void test(int _size) {
     if (t) std::cout << "\n\nCORRECT\n";
     else std::cout << "\n\nERROR\n";
 }
+
+//class my_hash_function {
+//public:
+//    unsigned int operator()(const Pair<int, int>& p) const {
+//        return p.get_first() + p.get_second();
+//    }
+//};
 
 int main() {
     try {
