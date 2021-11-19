@@ -19,7 +19,11 @@ public:
 
     Hash_Iterator<T> end() { return cache.end(); }
 
-    void print() { std::cout << "Cache:\n"; cache.print(); std::cout << "LRU_queue:\n"; lru_queue.print(); }
+    void print() { std::cout << "Cache:\n"; cache.print(); std::cout << "\nLRU_queue:\n"; lru_queue.print(); }
+    ListSequence<unsigned int>* get_lru_queue() { return &lru_queue; } //для тестов
+    unsigned int get_max_bucket_height() { return cache.get_max_bucket_height(); }
+    unsigned int get_size() { return cache.get_size(); }
+    unsigned int get_elem_number() { return cache.get_elem_number(); }
 };
 
 template<typename T>
