@@ -34,9 +34,9 @@ public:
 
     ~Vector(); //деструктор
 
-    int size() const { return m_size; } //возвращает длину вектора
+    [[nodiscard]] int size() const { return m_size; } //возвращает длину вектора
 
-    int capacity() const { return m_cap; } //возвращает вместимость вектора
+    [[nodiscard]] int capacity() const { return m_cap; } //возвращает вместимость вектора
 
     void reserve(int new_cap); //делает вместимость вектора равной new_cap элементов
 

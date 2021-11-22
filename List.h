@@ -227,7 +227,6 @@ T& List<T>::front() {
     return m_head->value;
 }
 
-
 template <typename T>
 T& List<T>::back() {
     if (m_size == 0)

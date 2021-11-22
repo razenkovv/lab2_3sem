@@ -7,7 +7,6 @@
 template <typename T>
 class Sequence {
 public:
-
     virtual void concat(Sequence<T> &other_seq) = 0;
     virtual std::unique_ptr<Sequence<T>> get_subsequence(int start, int end) = 0;
 
