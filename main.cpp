@@ -7,6 +7,8 @@
 #include "Sequences.h"
 #include "HashTable.h"
 #include "LRUCache.h"
+#include "SparedMatrix.h"
+#include "Matrix.h"
 
 class Timer {
 private:
@@ -16,7 +18,7 @@ private:
 public:
     Timer() : m_beg(clock_t::now()) {}
     void reset() { m_beg = clock_t::now(); }
-    double elapsed() const { return std::chrono::duration_cast<second_t>(clock_t::now() - m_beg).count(); }
+    [[nodiscard]] double elapsed() const { return std::chrono::duration_cast<second_t>(clock_t::now() - m_beg).count(); }
 };
 
 bool LRUCache_testing(unsigned int size) {
@@ -178,7 +180,7 @@ void time_test(int a, int b, int x) {
     generate_random_calls_without_cache(b, a, path);
     auto T2 = t2.elapsed();
 
-    std::string path2 = R"(C:\Users\Ivan\programming\labs_3sem\lab2_3sem\TimeTestResult)";
+    std::string path2 = R"(C:\Users\Ivan\programming\labs_3sem\lab2_3sem\TimeTestResult2.txt)";
     std::ofstream fout(path2);
     fout << "Size of the storage(csv file): " << a << "; Number of calls that was made: " << b << "\n";
     fout << "Cache is " << x << " times smaller than the storage\n";
@@ -196,17 +198,63 @@ void test(int _size) {
     else std::cout << "\n\nERROR\n";
 }
 
-//class my_hash_function {
-//public:
-//    unsigned int operator()(const Pair<int, int>& p) const {
-//        return p.get_first() + p.get_second();
-//    }
-//};
+int square(const int& x) {
+    return x * x;
+}
+
+int sum(const int& x, const int& y) {
+    return x + y;
+}
+
+void matrices_test() {
+    std::ifstream fin;
+    std::string path = R"(C:\Users\Ivan\programming\labs_3sem\lab2_3sem\Matrices.txt)";
+    fin.open(path);
+    if (!fin.is_open())
+        throw std::runtime_error("\nMatrices.txt: file wasn't opened\n");
+    unsigned int x1, y1, x2, y2;
+    fin >> y1;
+    fin >> x1;
+    SparedMatrix<int> a(x1, y1);
+    for (unsigned int i = 0; i < y1; ++i) {
+        for (unsigned int j = 0; j < x1; ++j) {
+            int val;
+            fin >> val;
+            if (val != 0) a.insert(j, i, val);
+        }
+    }
+    std::string tmp;
+    getline(fin, tmp);
+    fin >> y2;
+    fin >> x2;
+    SparedMatrix<int> b(x2, y2);
+    for (unsigned int i = 0; i < y2; ++i) {
+        for (unsigned int j = 0; j < x2; ++j) {
+            int val;
+            fin >> val;
+            if (val != 0) b.insert(j, i, val);
+        }
+    }
+    auto c = a.add(b);
+    auto d = a.multiply(b);
+    auto cc = c->map(square);
+    auto dd = d->map(square);
+    int value1(0), value2(0);
+    c->reduce(sum, value1); d->reduce(sum, value2);
+    std::cout << "Matrices A and B:\n"; a.print(); std::cout << "\n"; b.print(); std::cout << "\n";
+    std::cout << "A + B:\n"; c->print(); std::cout << "\n";
+    std::cout << "A * B:\n"; d->print(); std::cout << "\n";
+    std::cout << "map(A + B):\n"; cc->print(); std::cout << "\n";
+    std::cout << "map(A * B):\n"; dd->print(); std::cout << "\n";
+    std::cout << "reduce(A + B):\n" << value1 << "\n\n";
+    std::cout << "reduce(A * B):\n" << value2 << "\n";
+}
 
 int main() {
     try {
         //test(4); //размер кэша
         time_test(10000, 100000, 20); //число записей в csv файле, число генерируемых вызовов и во сколько раз вместимость кэша меньше вместимости исходного хранилища
+        //matrices_test();
     } catch (const std::runtime_error &msg) {
        std::cerr << msg.what();
     }

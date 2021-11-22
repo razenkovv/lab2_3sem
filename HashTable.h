@@ -27,24 +27,25 @@ protected:
     unsigned int table_size; //размер таблицы
     unsigned int elem_number; //число элементов в таблице
     double load_factor; //отношение elem_number к table_size
-    static constexpr unsigned int q_factor = 5;
+    static constexpr unsigned int q_factor = 2;
     static constexpr double rehash_factor_1 = 0.75;
     static constexpr double rehash_factor_2 = 0.1;
 
     F hash_function;
-    unsigned int hash_func(unsigned int key) { unsigned int res = hash_function(key) * table_size * 1.618; return res % table_size; }
+    unsigned int hash_func(const K& key) { unsigned int res = hash_function(key) * table_size * 1.618; return res % table_size; }
 
     void rehash_table(double k); //увеличение(уменьшение) размера хеш-таблицы в q_factor раз при достижении load_factor значений rehash_factor.
 
 public:
     HashTable() : table(), table_size(0), elem_number(0), load_factor(0) {}
     explicit HashTable(unsigned int n) : table(n, ListSequence<Pair<K, V>>()), table_size(n), elem_number(0), load_factor(0) {}
+    HashTable(const HashTable<K, V, F> &a) : table(a.table), table_size(a.table_size), elem_number(a.elem_number), load_factor(a.load_factor) {}
     ~HashTable();
 
     bool insert(const K& key, const V& value); //вставка нового ключа. если он уже есть - значение изменяется
     bool remove(const K& key); //удаление ключа. если его нет, возвращается false
     bool contain(const K& key); //возвращает true если ключ есть, false - если ключа нет
-    bool get(const K& key, V& value); //в value будет записано значение, найденное по ключу (если ключ есть, иначе возвращается false)
+    bool get(const K& key, V& value); //в value будет записано значение, найденное по ключу (если ключ есть, иначе возвращается false, причем value не изменяется)
 
     Hash_Iterator<K, V, F> get_(const K& key); //тоже get, но вовзращает итератор. если ключ не найден, вернется past-the-end итератор
 
@@ -84,19 +85,18 @@ public:
         }
         if (list_it != (*array_it).last()) {
             ++list_it;
-        } else  {
+        } else {
             do {
                 ++array_it;
                 if (array_it == m_table->get_array()->end())
                     break;
             } while ((*array_it).empty());
-        }
-        if (array_it != m_table->get_array()->end()) {
-            list_it = (*array_it).begin();
-        }
-        else {
-            array_it = m_table->get_array()->last();
-            list_it = (*array_it).end();
+            if (array_it != m_table->get_array()->end()) {
+                list_it = (*array_it).begin();
+            } else {
+                array_it = m_table->get_array()->last();
+                list_it = (*array_it).end();
+            }
         }
         return *this;
     }
@@ -122,14 +122,11 @@ Hash_Iterator<K, V, F> HashTable<K, V, F>::begin() {
             return Hash_Iterator<K, V, F>(this, a.begin(), array_it);
         ++array_it;
     }
-    //throw std::runtime_error("\n[Hash_Table] begin(): hash_table is empty\n");
     return Hash_Iterator<K, V, F>(this, (*(this->table.last())).end(), this->table.last());
 }
 
 template <typename K, typename V, typename F>
 Hash_Iterator<K, V, F> HashTable<K, V, F>::end() {
-//    if (elem_number == 0)
-//        throw std::runtime_error("\n[Hash_Table] end(): hash_table is empty\n");
     return Hash_Iterator<K, V, F>(this, (*(this->table.last())).end(), this->table.last());
 }
 
