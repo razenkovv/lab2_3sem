@@ -57,7 +57,6 @@ void LRUCache<K, V, F>::push(const K& key, const V& value) {
             key_to_list.remove(last_used_key); //убираем его из таблицы key_to_list
         }
     }
-
     lru_queue.push_front(key); //ставим ключ в начало очереди
     key_to_list.insert(key, lru_queue.begin()); //обновляем информацию об этом ключе в таблице key_to_list
     cache.insert(key, value); //вставляем ключ в кэш (обновляем значение, если ключ уже был в кэше)
